@@ -61,6 +61,7 @@ CREATE TABLE dbo.Room (
     RoomID     INT IDENTITY(1,1) NOT NULL,
     BuildingID INT               NOT NULL,
     Name       VARCHAR(100)      NOT NULL,
+    Level      VARCHAR(3)        NOT NULL,
     RoomTypeID INT               NOT NULL,
     CONSTRAINT PK_Room PRIMARY KEY CLUSTERED (RoomID),
     CONSTRAINT UQ_Room UNIQUE (BuildingID, Name),
