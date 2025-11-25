@@ -8,11 +8,11 @@ namespace Zealand_Lokale_Booking_Library.Models
 {
     public class RoomBooking
     {
-        public string RoomNumber { get; set; }   
-        public string Building { get; set; }     
-        public int Floor { get; set; }           
-        public string Type { get; set; }         
-        public string Department { get; set; }   
-        public string Time { get; set; }
+        public string RoomId { get; set; }   
+        public string BuildingId { get; set; }     
+        public int FloorId { get; set; }           
+        public string TypeId { get; set; }         
+        public string DepartmentId { get; set; }   
+        public string TimeId { get; set; }
     }
 }

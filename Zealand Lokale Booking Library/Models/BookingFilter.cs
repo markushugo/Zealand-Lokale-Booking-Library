@@ -10,7 +10,7 @@ namespace Zealand_Lokale_Booking_Library.Models
     {
         public string Department { get; set; }
         public string Building { get; set; }
-        public int? Floor { get; set; }
+        public int Floor { get; set; }
         public string Type { get; set; }
         public string RoomNumber { get; set; }
         public string Time { get; set; }
