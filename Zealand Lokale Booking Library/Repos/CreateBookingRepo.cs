@@ -5,7 +5,7 @@ using Microsoft.Data.SqlClient;
 
 namespace Zealand_Lokale_Booking_Library.Repos
 {
-    public class CreateBookingRepo
+    public class CreateBookingRepo:ICreateBookingRepo
     {
         private readonly string _connectionString;
 

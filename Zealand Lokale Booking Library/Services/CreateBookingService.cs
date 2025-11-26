@@ -4,7 +4,7 @@ using Zealand_Lokale_Booking_Library.Repos;
 
 namespace Zealand_Lokale_Booking_Library.Services
 {
-    public class CreateBookingService
+    public class CreateBookingService:ICreateBookingService
     {
         private readonly CreateBookingRepo _repo;
 

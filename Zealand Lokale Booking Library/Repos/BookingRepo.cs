@@ -14,7 +14,7 @@ namespace Zealand_Lokale_Booking_Library.Repos
     /// using the <c>dbo.usp_GetFilteredBookings</c> stored procedure and
     /// table-valued parameters.
     /// </summary>
-    public class BookingRepo
+    public class BookingRepo:IBookingRepo
     {
         private readonly string _connectionString;
 
