@@ -9,6 +9,11 @@ IF OBJECT_ID('dbo.usp_GetFilteredBookings', 'P') IS NOT NULL
     DROP PROCEDURE dbo.usp_GetFilteredBookings;
 GO
 
+IF OBJECT_ID('dbo.GetFilterOptionsForUser', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.GetFilterOptionsForUser;
+GO
+
+
 CREATE PROCEDURE dbo.usp_GetFilteredBookings
     @UserID        INT,                              -- UserID (mandatory)
     @Date          DATE,                             -- Date (mandatory)
@@ -98,5 +103,45 @@ BEGIN
         bu.Name,
         r.Level,
         r.Name;
+END;
+GO
+
+CREATE PROCEDURE dbo.GetFilterOptionsForUser
+    @UserID INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    ----------------------------------------------------------------------
+    -- 1) Departments this user has access to
+    ----------------------------------------------------------------------
+    SELECT 
+        d.DepartmentID AS [Value],
+        d.Name         AS [Text]
+    FROM dbo.Department d
+    INNER JOIN dbo.UserDepartmentMapping udm 
+        ON udm.DepartmentID = d.DepartmentID
+    WHERE udm.UserID = @UserID
+    ORDER BY d.Name;
+
+    ----------------------------------------------------------------------
+    -- 2) Buildings in those departments
+    ----------------------------------------------------------------------
+    SELECT 
+        b.BuildingID AS [Value],
+        b.Name       AS [Text]
+    FROM dbo.Building b
+    INNER JOIN dbo.UserDepartmentMapping udm
+        ON udm.DepartmentID = b.DepartmentID
+    WHERE udm.UserID = @UserID
+    ORDER BY b.Name;
+
+    ----------------------------------------------------------------------
+    -- 3) Room types – user can select ANY room type
+    ----------------------------------------------------------------------
+    SELECT 
+        rt.RoomTypeID AS [Value],
+        rt.RoomType   AS [Text]
+    FROM dbo.RoomType rt
+    ORDER BY rt.RoomType;
 END;
 GO
