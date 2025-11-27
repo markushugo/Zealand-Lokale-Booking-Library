@@ -43,7 +43,7 @@ namespace Zealand_Lokale_Booking_Library.Models
         /// Corresponds to the table-valued parameter <c>@BuildingIds</c>
         /// using SQL type <c>dbo.IntList</c>.
         /// </summary>
-        public List<int>? RoomIds { get; set; }
+        public List<int>? RoomIds { get; set; } // Legacy, dont use this!
         /// <summary>
         /// Gets or sets an optional list of room type IDs to filter by.
         /// Corresponds to the table-valued parameter <c>@RoomTypeIds</c>

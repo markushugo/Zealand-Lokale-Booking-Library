@@ -13,6 +13,10 @@ IF OBJECT_ID('dbo.GetFilterOptionsForUser', 'P') IS NOT NULL
     DROP PROCEDURE dbo.GetFilterOptionsForUser;
 GO
 
+IF OBJECT_ID('dbo.usp_GetAvailableBookingSlots', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.usp_GetAvailableBookingSlots;
+GO
+
 
 CREATE PROCEDURE dbo.usp_GetFilteredBookings
     @UserID        INT,                              -- UserID (mandatory)
@@ -143,5 +147,140 @@ BEGIN
         rt.RoomType   AS [Text]
     FROM dbo.RoomType rt
     ORDER BY rt.RoomType;
+END;
+GO
+
+-----------
+
+
+CREATE PROCEDURE dbo.usp_GetAvailableBookingSlots
+    @UserID        INT,                -- UserID (mandatory)
+    @Date          DATE,               -- Date (mandatory)
+    @DepartmentIds dbo.IntList   READONLY,
+    @BuildingIds   dbo.IntList   READONLY,
+    @RoomIds       dbo.IntList   READONLY,
+    @RoomTypeIds   dbo.IntList   READONLY,
+    @Levels        dbo.LevelList READONLY,
+    @Times         dbo.TimeList  READONLY
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF @Date IS NULL
+    BEGIN
+        RAISERROR('Date is required.', 16, 1);
+        RETURN;
+    END
+
+    ----------------------------------------------------------------------
+    -- 1) Rum brugeren har adgang til via UserDepartmentMapping + filtre
+    ----------------------------------------------------------------------
+    ;WITH FilteredRooms AS (
+        SELECT 
+            r.RoomID,
+            r.Name AS RoomName,
+            r.Level,
+            rt.RoomTypeID,
+            rt.RoomType,
+            rt.Capacity,
+            bu.BuildingID,
+            bu.Name AS BuildingName,
+            d.DepartmentID,
+            d.Name AS DepartmentName
+        FROM dbo.Room r
+        INNER JOIN dbo.RoomType rt   ON r.RoomTypeID = rt.RoomTypeID
+        INNER JOIN dbo.Building bu   ON r.BuildingID = bu.BuildingID
+        INNER JOIN dbo.Department d  ON bu.DepartmentID = d.DepartmentID
+        INNER JOIN dbo.UserDepartmentMapping udm
+            ON udm.DepartmentID = d.DepartmentID
+           AND udm.UserID       = @UserID
+        WHERE
+            -- Department filter
+            (
+                NOT EXISTS (SELECT 1 FROM @DepartmentIds)
+                OR d.DepartmentID IN (SELECT Id FROM @DepartmentIds)
+            )
+            -- Building filter
+            AND (
+                NOT EXISTS (SELECT 1 FROM @BuildingIds)
+                OR bu.BuildingID IN (SELECT Id FROM @BuildingIds)
+            )
+            -- Room filter
+            AND (
+                NOT EXISTS (SELECT 1 FROM @RoomIds)
+                OR r.RoomID IN (SELECT Id FROM @RoomIds)
+            )
+            -- RoomType filter
+            AND (
+                NOT EXISTS (SELECT 1 FROM @RoomTypeIds)
+                OR rt.RoomTypeID IN (SELECT Id FROM @RoomTypeIds)
+            )
+            -- Level filter
+            AND (
+                NOT EXISTS (SELECT 1 FROM @Levels)
+                OR r.Level IN (SELECT Level FROM @Levels)
+            )
+    ),
+    ----------------------------------------------------------------------
+    -- 2) Timeslots: default 08–14 hvis @Times er tom
+    ----------------------------------------------------------------------
+    DefaultTimes AS (
+        SELECT CAST('08:00' AS TIME) AS StartTime
+        UNION ALL SELECT CAST('09:00' AS TIME)
+        UNION ALL SELECT CAST('10:00' AS TIME)
+        UNION ALL SELECT CAST('11:00' AS TIME)
+        UNION ALL SELECT CAST('12:00' AS TIME)
+        UNION ALL SELECT CAST('13:00' AS TIME)
+        UNION ALL SELECT CAST('14:00' AS TIME)
+    ),
+    TimeSlots AS (
+        -- Hvis @Times er tom, brug default tider
+        SELECT StartTime
+        FROM DefaultTimes
+        WHERE NOT EXISTS (SELECT 1 FROM @Times)
+
+        UNION
+
+        -- Ellers brug dem der er givet
+        SELECT StartTime
+        FROM @Times
+    )
+
+    ----------------------------------------------------------------------
+    -- 3) Rum x tider LEFT JOIN Booking -> kun rækker uden booking
+    ----------------------------------------------------------------------
+    SELECT
+        -- Disse felter mapper direkte til din Booking DTO
+        CAST(NULL AS INT)          AS BookingID,     -- altid ledig -> null
+        @Date                      AS [Date],
+        ts.StartTime               AS StartTime,
+        CAST(NULL AS INT)          AS UserID,
+        CAST(NULL AS VARCHAR(100)) AS UserName,
+        fr.RoomID,
+        fr.RoomName,
+        fr.Level,
+        fr.RoomTypeID,
+        fr.RoomType,
+        fr.Capacity,
+        fr.BuildingID,
+        fr.BuildingName,
+        fr.DepartmentID,
+        fr.DepartmentName,
+        CAST(NULL AS INT)          AS SmartBoardID
+    FROM FilteredRooms fr
+    CROSS JOIN TimeSlots ts
+    LEFT JOIN dbo.Booking b
+        ON  b.RoomID    = fr.RoomID
+        AND b.[Date]    = @Date
+        AND b.StartTime = ts.StartTime
+    WHERE
+        b.BookingID IS NULL  -- KUN ledige tider
+    ORDER BY
+        [Date],
+        ts.StartTime,
+        fr.DepartmentName,
+        fr.BuildingName,
+        fr.Level,
+        fr.RoomName;
 END;
 GO
