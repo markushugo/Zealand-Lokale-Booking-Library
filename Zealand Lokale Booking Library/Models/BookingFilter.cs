@@ -24,7 +24,7 @@ namespace Zealand_Lokale_Booking_Library.Models
         /// Gets or sets the date for which bookings are retrieved.
         /// Corresponds to <c>@Date</c>.
         /// </summary>
-        public DateTime Date { get; set; }
+        public DateTime Date { get; set; } = DateTime.Today;
 
         /// <summary>
         /// Gets or sets an optional list of department IDs to filter by.
