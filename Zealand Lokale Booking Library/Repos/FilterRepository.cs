@@ -9,13 +9,40 @@ using Zealand_Lokale_Booking_Library.Models;
 
 namespace Zealand_Lokale_Booking_Library.Repos
 {
+    /// <summary>
+    /// Provides access to filter-related data and available booking slots,
+    /// including fetching filter options for a specific user and retrieving
+    /// free room booking times based on user-defined criteria.
+    /// </summary>
     public class FilterRepository
     {
         private readonly string _connectionString;
+        /// <summary>
+        /// Initializes a new instance of the <see cref="FilterRepository"/> class,
+        /// using the provided database connection string.
+        /// </summary>
+        /// <param name="connectionString">
+        /// The connection string used to connect to the SQL Server database.
+        /// </param>
         public FilterRepository(string connectionString)
         {
             _connectionString = connectionString;
         }
+
+        /// <summary>
+        /// Retrieves all filter options accessible to the specified user.
+        /// This includes:
+        /// <list type="bullet">
+        /// <item><description>Departments</description></item>
+        /// <item><description>Buildings</description></item>
+        /// <item><description>Room types</description></item>
+        /// <item><description>Hardcoded time slot options</description></item>
+        /// <item><description>Hardcoded level options</description></item>
+        /// </list>
+        /// The data is sourced from the stored procedure <c>dbo.GetFilterOptionsForUser</c>.
+        /// </summary>
+        /// <param name="userId">The ID of the user requesting filter options.</param>
+        /// <returns>A <see cref="FilterOptions"/> object containing all available filter values.</returns>
         public async Task<FilterOptions> GetFilterOptionsForUserAsync(int userId)
         {
             var filters = new FilterOptions();
@@ -30,10 +57,6 @@ namespace Zealand_Lokale_Booking_Library.Repos
 
             await conn.OpenAsync();
             using var reader = await cmd.ExecuteReaderAsync();
-
-            // -----------------------------
-            // 1) Departments
-            // -----------------------------
             while (await reader.ReadAsync())
             {
                 var key = reader["Value"]?.ToString() ?? string.Empty;
@@ -42,10 +65,6 @@ namespace Zealand_Lokale_Booking_Library.Repos
                 if (!string.IsNullOrEmpty(key))
                     filters.Departments[key] = value;
             }
-
-            // -----------------------------
-            // 2) Buildings
-            // -----------------------------
             if (await reader.NextResultAsync())
             {
                 while (await reader.ReadAsync())
@@ -57,10 +76,6 @@ namespace Zealand_Lokale_Booking_Library.Repos
                         filters.Buildings[key] = value;
                 }
             }
-
-            // -----------------------------
-            // 3) RoomTypes (all from RoomType table)
-            // -----------------------------
             if (await reader.NextResultAsync())
             {
                 while (await reader.ReadAsync())
@@ -72,10 +87,7 @@ namespace Zealand_Lokale_Booking_Library.Repos
                         filters.RoomTypes[key] = value;
                 }
             }
-
-            // -----------------------------
-            // 4) Hardcoded TimeSlots
-            // -----------------------------
+            // Hardcoded TimeSlots
             filters.TimeSlots = new Dictionary<string, string>
             {
                 { "8",  "8-10" },
@@ -83,20 +95,23 @@ namespace Zealand_Lokale_Booking_Library.Repos
                 { "12", "12-14" },
                 { "14", "14-16" }
             };
-
-            // -----------------------------
-            // 5) Hardcoded LevelOptions
-            // -----------------------------
+            // Hardcoded LevelOptions
             filters.LevelOptions = new Dictionary<string, string>
             {
                 { "1", "1" },
                 { "2", "2" },
                 { "3", "3" }
             };
-
             return filters;
         }
 
+        /// <summary>
+        /// Retrieves all available (unbooked) booking slots based on the specified filter criteria.
+        /// This method calls the stored procedure <c>dbo.usp_GetAvailableBookingSlots</c>,
+        /// which returns room/time combinations where no booking exists.
+        /// </summary>
+        /// <param name="filter">A <see cref="BookingFilter"/> object containing date, user ID, and filter lists.</param>
+        /// <returns>An enumerable collection of <see cref="Booking"/> objects representing free booking slots.</returns>
         public IEnumerable<Booking> GetAvailableBookingSlots(BookingFilter filter)
         {
             var list = new List<Booking>();
@@ -110,12 +125,12 @@ namespace Zealand_Lokale_Booking_Library.Repos
             cmd.Parameters.AddWithValue("@UserID", filter.UserID);
             cmd.Parameters.AddWithValue("@Date", filter.Date.Date);
 
-            AddIntListParameter(cmd, "@DepartmentIds", "dbo.IntList", filter.DepartmentIds);
-            AddIntListParameter(cmd, "@BuildingIds", "dbo.IntList", filter.BuildingIds);
-            AddIntListParameter(cmd, "@RoomIds", "dbo.IntList", filter.RoomIds);
-            AddIntListParameter(cmd, "@RoomTypeIds", "dbo.IntList", filter.RoomTypeIds);
-            AddLevelListParameter(cmd, "@Levels", "dbo.LevelList", filter.Levels);
-            AddTimeListParameter(cmd, "@Times", "dbo.TimeList", filter.Times);
+            _addIntListParameter(cmd, "@DepartmentIds", "dbo.IntList", filter.DepartmentIds);
+            _addIntListParameter(cmd, "@BuildingIds", "dbo.IntList", filter.BuildingIds);
+            _addIntListParameter(cmd, "@RoomIds", "dbo.IntList", filter.RoomIds);
+            _addIntListParameter(cmd, "@RoomTypeIds", "dbo.IntList", filter.RoomTypeIds);
+            _addLevelListParameter(cmd, "@Levels", "dbo.LevelList", filter.Levels);
+            _addTimeListParameter(cmd, "@Times", "dbo.TimeList", filter.Times);
 
             conn.Open();
             using var rdr = cmd.ExecuteReader();
@@ -124,7 +139,6 @@ namespace Zealand_Lokale_Booking_Library.Repos
             {
                 var booking = new Booking
                 {
-                    // disse er altid null for ledige slots
                     BookingID = rdr["BookingID"] as int?,
                     UserID = rdr["UserID"] as int?,
                     UserName = rdr["UserName"] as string,
@@ -150,10 +164,7 @@ namespace Zealand_Lokale_Booking_Library.Repos
             return list;
         }
 
-        // -----------------------
-        // AddIntListParameter
-        // -----------------------
-        private static void AddIntListParameter(
+        private static void _addIntListParameter(
             SqlCommand cmd,
             string paramName,
             string typeName,
@@ -174,11 +185,7 @@ namespace Zealand_Lokale_Booking_Library.Repos
             parameter.TypeName = typeName;
         }
 
-
-        // -----------------------
-        // AddLevelListParameter
-        // -----------------------
-        private static void AddLevelListParameter(
+        private static void _addLevelListParameter(
             SqlCommand cmd,
             string paramName,
             string typeName,
@@ -199,17 +206,13 @@ namespace Zealand_Lokale_Booking_Library.Repos
             parameter.TypeName = typeName;
         }
 
-
-        // -----------------------
-        // AddTimeListParameter
-        // -----------------------
-        private static void AddTimeListParameter(
+        private static void _addTimeListParameter(
             SqlCommand cmd,
             string paramName,
             string typeName,
             List<TimeOnly>? times)
         {
-            // SQL TIME = .NET TimeSpan
+            // Create DataTable matching dbo.TimelList (StartTime TIME)
             var table = new DataTable();
             table.Columns.Add("StartTime", typeof(TimeSpan));
 
@@ -223,8 +226,6 @@ namespace Zealand_Lokale_Booking_Library.Repos
             parameter.SqlDbType = SqlDbType.Structured;
             parameter.TypeName = typeName;
         }
-
-
 
     }
 }
