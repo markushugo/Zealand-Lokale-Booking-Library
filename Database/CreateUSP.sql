@@ -4,7 +4,6 @@ GO
 
 -- UserStoredProcedures
 
-
 IF OBJECT_ID('dbo.usp_GetFilteredBookings', 'P') IS NOT NULL
     DROP PROCEDURE dbo.usp_GetFilteredBookings;
 GO
@@ -19,14 +18,14 @@ GO
 
 
 CREATE PROCEDURE dbo.usp_GetFilteredBookings
-    @UserID        INT,                              -- UserID (mandatory)
-    @Date          DATE,                             -- Date (mandatory)
-    @DepartmentIds dbo.IntList     READONLY,         -- list of DepartmentID (PK)
-    @BuildingIds   dbo.IntList     READONLY,         -- list of BuildingID (PK)
-    @RoomIds       dbo.IntList     READONLY,         -- list of RoomID (PK)
-    @RoomTypeIds   dbo.IntList     READONLY,         -- list of RoomTypeID (PK)
-    @Levels        dbo.LevelList   READONLY,         -- list of Level values (e.g. '1', '2')
-    @Times         dbo.TimeList    READONLY          -- list of StartTime values (time)
+    @UserID        INT,                              
+    @Date          DATE,                             
+    @DepartmentIds dbo.IntList     READONLY,   
+    @BuildingIds   dbo.IntList     READONLY,      
+    @RoomIds       dbo.IntList     READONLY,       
+    @RoomTypeIds   dbo.IntList     READONLY,       
+    @Levels        dbo.LevelList   READONLY,      
+    @Times         dbo.TimeList    READONLY    
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -65,37 +64,26 @@ BEGIN
     LEFT  JOIN dbo.SmartBoard          AS sb  ON b.SmartBoardID = sb.SmartBoardID
     WHERE
         b.[Date] = @Date
-
-        -- Department filter
         AND (
             NOT EXISTS (SELECT 1 FROM @DepartmentIds)
             OR d.DepartmentID IN (SELECT Id FROM @DepartmentIds)
         )
-        -- Building filter
         AND (
             NOT EXISTS (SELECT 1 FROM @BuildingIds)
             OR bu.BuildingID IN (SELECT Id FROM @BuildingIds)
         )
-
-        -- Room filter
         AND (
             NOT EXISTS (SELECT 1 FROM @RoomIds)
             OR r.RoomID IN (SELECT Id FROM @RoomIds)
         )
-
-        -- RoomType filter
         AND (
             NOT EXISTS (SELECT 1 FROM @RoomTypeIds)
             OR rt.RoomTypeID IN (SELECT Id FROM @RoomTypeIds)
         )
-
-        -- Level filter
         AND (
             NOT EXISTS (SELECT 1 FROM @Levels)
             OR r.Level IN (SELECT Level FROM @Levels)
         )
-
-        -- StartTime filter
         AND (
             NOT EXISTS (SELECT 1 FROM @Times)
             OR b.StartTime IN (SELECT StartTime FROM @Times)
@@ -110,13 +98,15 @@ BEGIN
 END;
 GO
 
+----------------------------------------------------------------------------
+
 CREATE PROCEDURE dbo.GetFilterOptionsForUser
     @UserID INT
 AS
 BEGIN
     SET NOCOUNT ON;
     ----------------------------------------------------------------------
-    -- 1) Departments this user has access to
+    -- Departments the user has access to
     ----------------------------------------------------------------------
     SELECT 
         d.DepartmentID AS [Value],
@@ -128,7 +118,7 @@ BEGIN
     ORDER BY d.Name;
 
     ----------------------------------------------------------------------
-    -- 2) Buildings in those departments
+    -- Buildings in the departments
     ----------------------------------------------------------------------
     SELECT 
         b.BuildingID AS [Value],
@@ -138,9 +128,8 @@ BEGIN
         ON udm.DepartmentID = b.DepartmentID
     WHERE udm.UserID = @UserID
     ORDER BY b.Name;
-
     ----------------------------------------------------------------------
-    -- 3) Room types – user can select ANY room type
+    -- Room types
     ----------------------------------------------------------------------
     SELECT 
         rt.RoomTypeID AS [Value],
@@ -149,13 +138,11 @@ BEGIN
     ORDER BY rt.RoomType;
 END;
 GO
-
------------
-
+---------------------------------------------------------------------------
 
 CREATE PROCEDURE dbo.usp_GetAvailableBookingSlots
-    @UserID        INT,                -- UserID (mandatory)
-    @Date          DATE,               -- Date (mandatory)
+    @UserID        INT,                
+    @Date          DATE,            
     @DepartmentIds dbo.IntList   READONLY,
     @BuildingIds   dbo.IntList   READONLY,
     @RoomIds       dbo.IntList   READONLY,
@@ -173,7 +160,7 @@ BEGIN
     END
 
     ----------------------------------------------------------------------
-    -- 1) Rum brugeren har adgang til via UserDepartmentMapping + filtre
+    -- Temporary table for available rooms
     ----------------------------------------------------------------------
     ;WITH FilteredRooms AS (
         SELECT 
@@ -195,63 +182,49 @@ BEGIN
             ON udm.DepartmentID = d.DepartmentID
            AND udm.UserID       = @UserID
         WHERE
-            -- Department filter
             (
                 NOT EXISTS (SELECT 1 FROM @DepartmentIds)
                 OR d.DepartmentID IN (SELECT Id FROM @DepartmentIds)
             )
-            -- Building filter
             AND (
                 NOT EXISTS (SELECT 1 FROM @BuildingIds)
                 OR bu.BuildingID IN (SELECT Id FROM @BuildingIds)
             )
-            -- Room filter
             AND (
                 NOT EXISTS (SELECT 1 FROM @RoomIds)
                 OR r.RoomID IN (SELECT Id FROM @RoomIds)
             )
-            -- RoomType filter
             AND (
                 NOT EXISTS (SELECT 1 FROM @RoomTypeIds)
                 OR rt.RoomTypeID IN (SELECT Id FROM @RoomTypeIds)
             )
-            -- Level filter
             AND (
                 NOT EXISTS (SELECT 1 FROM @Levels)
                 OR r.Level IN (SELECT Level FROM @Levels)
             )
     ),
     ----------------------------------------------------------------------
-    -- 2) Timeslots: default 08–14 hvis @Times er tom
+    -- Timeslots (default 08–14)
     ----------------------------------------------------------------------
     DefaultTimes AS (
         SELECT CAST('08:00' AS TIME) AS StartTime
-        UNION ALL SELECT CAST('09:00' AS TIME)
         UNION ALL SELECT CAST('10:00' AS TIME)
-        UNION ALL SELECT CAST('11:00' AS TIME)
         UNION ALL SELECT CAST('12:00' AS TIME)
-        UNION ALL SELECT CAST('13:00' AS TIME)
         UNION ALL SELECT CAST('14:00' AS TIME)
     ),
     TimeSlots AS (
-        -- Hvis @Times er tom, brug default tider
         SELECT StartTime
         FROM DefaultTimes
         WHERE NOT EXISTS (SELECT 1 FROM @Times)
-
         UNION
-
-        -- Ellers brug dem der er givet
         SELECT StartTime
         FROM @Times
     )
-
     ----------------------------------------------------------------------
-    -- 3) Rum x tider LEFT JOIN Booking -> kun rækker uden booking
+    -- Rooms x times 
     ----------------------------------------------------------------------
     SELECT
-        -- Disse felter mapper direkte til din Booking DTO
-        CAST(NULL AS INT)          AS BookingID,     -- altid ledig -> null
+        CAST(NULL AS INT)          AS BookingID,
         @Date                      AS [Date],
         ts.StartTime               AS StartTime,
         CAST(NULL AS INT)          AS UserID,
@@ -274,7 +247,7 @@ BEGIN
         AND b.[Date]    = @Date
         AND b.StartTime = ts.StartTime
     WHERE
-        b.BookingID IS NULL  -- KUN ledige tider
+        b.BookingID IS NULL
     ORDER BY
         [Date],
         ts.StartTime,
