@@ -219,7 +219,7 @@ namespace Zealand_Lokale_Booking_Library.Repos
             if (times != null)
             {
                 foreach (var t in times)
-                    table.Rows.Add(t.ToTimeSpan());
+                table.Rows.Add(t.ToTimeSpan());
             }
 
             var parameter = cmd.Parameters.AddWithValue(paramName, table);
