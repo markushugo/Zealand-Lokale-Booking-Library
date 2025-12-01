@@ -257,3 +257,131 @@ BEGIN
         fr.RoomName;
 END;
 GO
+
+
+
+
+IF OBJECT_ID('dbo.usp_CreateBooking', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.usp_CreateBooking;
+GO
+
+CREATE PROCEDURE dbo.usp_CreateBooking
+    @UserID       INT,
+    @RoomID       INT,
+    @Date         DATE,
+    @StartTime    TIME,
+    @SmartBoardID INT = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    ------------------------------------------------------------------------
+    -- 1. Input validation
+    ------------------------------------------------------------------------
+    IF @UserID IS NULL OR @RoomID IS NULL
+    BEGIN
+        RAISERROR('UserID and RoomID are required.', 16, 1);
+        RETURN;
+    END
+
+    IF @Date IS NULL
+    BEGIN
+        RAISERROR('Date is required.', 16, 1);
+        RETURN;
+    END
+
+    IF @Date < CAST(GETDATE() AS DATE)
+    BEGIN
+        RAISERROR('Date cannot be in the past.', 16, 1);
+        RETURN;
+    END
+
+    IF @StartTime NOT BETWEEN '08:00' AND '14:00'
+    BEGIN
+        RAISERROR('StartTime must be between 08:00 and 14:00.', 16, 1);
+        RETURN;
+    END
+
+    ------------------------------------------------------------------------
+    -- 2. Validate Room exists
+    ------------------------------------------------------------------------
+    IF NOT EXISTS (SELECT 1 FROM dbo.Room WHERE RoomID = @RoomID)
+    BEGIN
+        RAISERROR('Room does not exist.', 16, 1);
+        RETURN;
+    END
+
+    ------------------------------------------------------------------------
+    -- 3. Validate SmartBoard belongs to the room (if provided)
+    ------------------------------------------------------------------------
+    IF @SmartBoardID IS NOT NULL
+    BEGIN
+        IF NOT EXISTS (
+            SELECT 1 
+            FROM dbo.SmartBoard 
+            WHERE SmartBoardID = @SmartBoardID 
+              AND RoomID = @RoomID
+        )
+        BEGIN
+            RAISERROR('SmartBoard does not belong to the selected room.', 16, 1);
+            RETURN;
+        END
+    END
+
+    ------------------------------------------------------------------------
+    -- 4. Validate user access to the department of the room
+    ------------------------------------------------------------------------
+    IF NOT EXISTS (
+        SELECT 1
+        FROM dbo.Room r
+        INNER JOIN dbo.Building b  ON r.BuildingID = b.BuildingID
+        INNER JOIN dbo.Department d ON b.DepartmentID = d.DepartmentID
+        INNER JOIN dbo.UserDepartmentMapping udm 
+            ON udm.DepartmentID = d.DepartmentID
+           AND udm.UserID       = @UserID
+        WHERE r.RoomID = @RoomID
+    )
+    BEGIN
+        RAISERROR('User does NOT have access to the department of the selected room.', 16, 1);
+        RETURN;
+    END
+
+    ------------------------------------------------------------------------
+    -- 5. Check for booking conflicts
+    ------------------------------------------------------------------------
+    IF EXISTS (
+        SELECT 1
+        FROM dbo.Booking
+        WHERE RoomID    = @RoomID
+          AND [Date]    = @Date
+          AND StartTime = @StartTime
+    )
+    BEGIN
+        RAISERROR('The room is already booked at this time.', 16, 1);
+        RETURN;
+    END
+
+    ------------------------------------------------------------------------
+    -- 6. Insert booking
+    ------------------------------------------------------------------------
+    INSERT INTO dbo.Booking (RoomID, UserID, StartTime, [Date], SmartBoardID)
+    VALUES (@RoomID, @UserID, @StartTime, @Date, @SmartBoardID);
+
+    ------------------------------------------------------------------------
+    -- 7. Return booking info
+    ------------------------------------------------------------------------
+    SELECT 
+        b.BookingID,
+        b.RoomID,
+        r.Name AS RoomName,
+        b.UserID,
+        u.Name AS UserName,
+        b.[Date],
+        b.StartTime,
+        b.SmartBoardID
+    FROM dbo.Booking b
+    INNER JOIN dbo.Room r ON b.RoomID = r.RoomID
+    INNER JOIN dbo.[User] u ON b.UserID = u.UserID
+    WHERE b.BookingID = SCOPE_IDENTITY();
+END;
+GO

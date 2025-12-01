@@ -1,11 +1,12 @@
-﻿using System;
+﻿using Microsoft.Data.SqlClient;
+using System;
 using System.Data;
 using System.Threading.Tasks;
-using Microsoft.Data.SqlClient;
+using Zealand_Lokale_Booking_Library.Repos;
 
 namespace Zealand_Lokale_Booking_Library.Repos
 {
-    public class CreateBookingRepo:ICreateBookingRepo
+    public class CreateBookingRepo //ICreateBookingRepo
     {
         private readonly string _connectionString;
 
@@ -22,7 +23,7 @@ namespace Zealand_Lokale_Booking_Library.Repos
         /// - Room ownership validation
         /// - Returns the new BookingID
         /// </summary>
-        public async Task<int> CreateBookingAsync(int userId, int roomId, DateTime date, TimeSpan startTime, int? smartBoardId)
+        public async Task CreateBookingAsync(int userId, int roomId, DateTime date, TimeSpan startTime, int? smartBoardId)
         {
             using var connection = new SqlConnection(_connectionString);
             using var command = new SqlCommand("dbo.usp_CreateBooking", connection)
@@ -42,13 +43,6 @@ namespace Zealand_Lokale_Booking_Library.Repos
                 Value = smartBoardId.HasValue ? smartBoardId.Value : DBNull.Value
             });
 
-            // Output parameter
-            var outputParam = new SqlParameter("@NewBookingID", SqlDbType.Int)
-            {
-                Direction = ParameterDirection.Output
-            };
-            command.Parameters.Add(outputParam);
-
             await connection.OpenAsync().ConfigureAwait(false);
 
             try
@@ -60,9 +54,30 @@ namespace Zealand_Lokale_Booking_Library.Repos
                 // Stored procedure throws errors using RAISERROR or THROW
                 throw new InvalidOperationException($"Booking could not be created: {ex.Message}", ex);
             }
-
-            return (int)outputParam.Value;
         }
     }
 }
 
+//How to use this repo:
+//using Zealand_Lokale_Booking_Library.Repos;
+
+//internal class Program
+//{
+//    static async Task Main(string[] args)
+//    {
+//        string connectionString = "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=ZealandBooking;Integrated Security=True;Encrypt=False;TrustServerCertificate=False;";
+
+//        var repo = new CreateBookingRepo(connectionString);
+
+//        await repo.CreateBookingAsync
+//        (
+//            1,
+//            1,
+//            DateTime.Parse("2025-11-29"),
+//            TimeSpan.Parse("12:00"),
+//            null
+//        );
+
+//        Console.WriteLine("Booking created with ID: ");
+//    }
+//}
