@@ -24,7 +24,7 @@ namespace Zealand_Lokale_Booking_Library.Models
         /// Gets or sets the date for which bookings are retrieved.
         /// Corresponds to <c>@Date</c>.
         /// </summary>
-        public DateTime Date { get; set; }
+        public DateTime Date { get; set; } = DateTime.Today;
 
         /// <summary>
         /// Gets or sets an optional list of department IDs to filter by.
@@ -43,7 +43,7 @@ namespace Zealand_Lokale_Booking_Library.Models
         /// Corresponds to the table-valued parameter <c>@BuildingIds</c>
         /// using SQL type <c>dbo.IntList</c>.
         /// </summary>
-        public List<int>? RoomIds { get; set; }
+        public List<int>? RoomIds { get; set; } // Legacy, dont use this!
         /// <summary>
         /// Gets or sets an optional list of room type IDs to filter by.
         /// Corresponds to the table-valued parameter <c>@RoomTypeIds</c>

@@ -9,39 +9,5 @@ namespace Zealand_Lokale_Booking_Library.Services
 {
     public class BookingService : IBookingService
     {
-
-        public IEnumerable<string> GetDepartments()
-        {
-            throw new NotImplementedException();
-        }
-
-        public IEnumerable<string> GetBuildings()
-        {
-            throw new NotImplementedException();
-        }
-
-        public IEnumerable<int> GetFloors()
-        {
-            throw new NotImplementedException();
-        }
-
-        public IEnumerable<string> GetTypes()
-        {
-            throw new NotImplementedException();
-        }
-
-        public IEnumerable<string> GetRooms()
-        {
-            throw new NotImplementedException();
-        }
-
-        public IEnumerable<string> GetTimes()
-        {
-            throw new NotImplementedException();
-        }
-        public IEnumerable<RoomBooking> GetBookings(BookingFilter filter)
-        {
-            throw new NotImplementedException();
-        }
     }
 }
