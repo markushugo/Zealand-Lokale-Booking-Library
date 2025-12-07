@@ -16,6 +16,10 @@ IF OBJECT_ID('dbo.usp_GetAvailableBookingSlots', 'P') IS NOT NULL
     DROP PROCEDURE dbo.usp_GetAvailableBookingSlots;
 GO
 
+IF OBJECT_ID('dbo.usp_GetBookingsByUserID', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.usp_GetBookingsByUserID;
+GO
+
 
 CREATE PROCEDURE dbo.usp_GetFilteredBookings
     @UserID        INT,                              
@@ -441,5 +445,53 @@ BEGIN
            NULL AS UserID,
            NULL AS Name,
            NULL AS Email;
+END;
+GO
+GO
+
+
+--------------------------------------------------------------
+CREATE PROCEDURE dbo.usp_GetBookingsByUserID
+    @UserID INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF @UserID IS NULL
+    BEGIN
+        RAISERROR('UserID is required.', 16, 1);
+        RETURN;
+    END
+
+    SELECT
+        b.BookingID,
+        b.[Date], 
+        b.StartTime,
+        u.UserID,
+        u.Name AS UserName,
+        r.RoomID,
+        r.Name AS RoomName,
+        r.Level,
+        rt.RoomTypeID,
+        rt.RoomType,
+        rt.Capacity,
+        bu.BuildingID,
+        bu.Name AS BuildingName,
+        d.DepartmentID,
+        d.Name AS DepartmentName,
+        b.SmartBoardID
+    FROM dbo.Booking b
+    INNER JOIN dbo.[User] u          ON b.UserID = u.UserID
+    INNER JOIN dbo.Room r            ON b.RoomID = r.RoomID
+    INNER JOIN dbo.RoomType rt       ON r.RoomTypeID = rt.RoomTypeID
+    INNER JOIN dbo.Building bu       ON r.BuildingID = bu.BuildingID
+    INNER JOIN dbo.Department d      ON bu.DepartmentID = d.DepartmentID
+    LEFT  JOIN dbo.SmartBoard sb     ON b.SmartBoardID = sb.SmartBoardID
+    WHERE
+        b.UserID = @UserID
+    ORDER BY
+        b.[Date],
+        b.StartTime,
+        r.Name;
 END;
 GO
