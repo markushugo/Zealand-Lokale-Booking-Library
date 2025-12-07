@@ -435,7 +435,8 @@ BEGIN
         DECLARE @SessionID uniqueidentifier = NEWID();
         SELECT CONVERT(CHAR(255), @SessionID) AS 'char';
         UPDATE [User] set LoggedinSessioonID=@SessionID WHERE Email=@Email
-        RETURN @SessionID;
+        SELECT 1 AS IsAuthenticated, @SessionID AS SessionID;
+        RETURN;
     END
     
     --------------------------------------------------------
@@ -446,7 +447,6 @@ BEGIN
            NULL AS Name,
            NULL AS Email;
 END;
-GO
 GO
 
 
