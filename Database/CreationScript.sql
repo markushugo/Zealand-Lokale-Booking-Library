@@ -86,7 +86,7 @@ CREATE TABLE dbo.SmartBoard (
         ON DELETE CASCADE
 );
 GO
-
+-- make email unique across ids     
 CREATE TABLE dbo.[User] (
     UserID     INT IDENTITY(1,1) NOT NULL,
     Name       VARCHAR(100)      NOT NULL,
@@ -94,6 +94,7 @@ CREATE TABLE dbo.[User] (
     Email      VARCHAR(100)      NOT NULL,
     Password   VARCHAR(255)      NOT NULL,
     UserTypeID INT               NOT NULL,
+    LoggedinSessioonID INT IDENTITY(1,1) NULL,
     CONSTRAINT PK_User PRIMARY KEY CLUSTERED (UserID),
     CONSTRAINT UQ_User_Email UNIQUE (Email),
     CONSTRAINT FK_User_UserType

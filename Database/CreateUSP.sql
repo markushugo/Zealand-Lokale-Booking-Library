@@ -385,3 +385,61 @@ BEGIN
     WHERE b.BookingID = SCOPE_IDENTITY();
 END;
 GO
+
+IF OBJECT_ID('dbo.usp_LoginUser', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.usp_LoginUser;
+GO
+
+CREATE PROCEDURE dbo.usp_LoginUser
+    @Email      NVARCHAR(255),
+    @Password   NVARCHAR(255)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    --------------------------------------------------------
+    -- 1. Input validation
+    --------------------------------------------------------
+    IF @Email IS NULL OR LTRIM(RTRIM(@Email)) = ''
+    BEGIN
+        RAISERROR('Email is required.', 16, 1);
+        RETURN;
+    END
+
+    IF @Password IS NULL OR LTRIM(RTRIM(@Password)) = ''
+    BEGIN
+        RAISERROR('Password is required.', 16, 1);
+        RETURN;
+    END
+
+
+    --------------------------------------------------------
+    -- 2. Validate user exists AND password matches
+    --------------------------------------------------------
+    IF EXISTS (
+        SELECT 1
+        FROM dbo.[User]
+        WHERE Email = @Email
+          AND [Password] = @Password
+    )
+    BEGIN
+        -- Login successful
+        -- Then Create guid
+        -- wrtie guid to db
+        -- write guid to cookie(in service)
+        -- return guid
+        DECLARE @SessionID uniqueidentifier = NEWID();
+        SELECT CONVERT(CHAR(255), @SessionID) AS 'char';
+        UPDATE [User] set LoggedinSessioonID=@SessionID WHERE Email=@Email
+        RETURN @SessionID;
+    END
+    
+    --------------------------------------------------------
+    -- 3. Login failed
+    --------------------------------------------------------
+    SELECT CAST(0 AS BIT) AS IsAuthenticated,
+           NULL AS UserID,
+           NULL AS Name,
+           NULL AS Email;
+END;
+GO
