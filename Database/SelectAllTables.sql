@@ -1,4 +1,4 @@
-USE ZealandBooking;
+2USE ZealandBooking;
 GO
 
 SELECT * FROM dbo.Department;

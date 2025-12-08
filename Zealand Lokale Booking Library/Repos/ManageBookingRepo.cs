@@ -28,7 +28,7 @@ namespace Zealand_Lokale_Booking_Library.Repos
             var list = new List<Booking>();
 
             using var conn = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand("dbo.usp_GetAvailableBookingSlots", conn)
+            using var cmd = new SqlCommand("dbo.usp_GetFilteredBookings", conn)
             {
                 CommandType = CommandType.StoredProcedure
             };
@@ -135,6 +135,20 @@ namespace Zealand_Lokale_Booking_Library.Repos
             var parameter = cmd.Parameters.AddWithValue(paramName, table);
             parameter.SqlDbType = SqlDbType.Structured;
             parameter.TypeName = typeName;
+        }
+        public async Task DeleteBookingAsync(int bookingId, int userId)
+        {
+            using var conn = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand("dbo.usp_DeleteBooking", conn)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.AddWithValue("@BookingID", bookingId);
+            cmd.Parameters.AddWithValue("@UserID", userId);
+
+            await conn.OpenAsync();
+            await cmd.ExecuteNonQueryAsync();
         }
     }
 
