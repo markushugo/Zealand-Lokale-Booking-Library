@@ -19,6 +19,9 @@ GO
 IF OBJECT_ID('dbo.usp_GetBookingsByUserID', 'P') IS NOT NULL
     DROP PROCEDURE dbo.usp_GetBookingsByUserID;
 GO
+IF OBJECT_ID('dbo.usp_DeleteBooking', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.usp_DeleteBooking;
+GO
 
 
 CREATE PROCEDURE dbo.usp_GetFilteredBookings
@@ -388,6 +391,87 @@ BEGIN
     INNER JOIN dbo.[User] u ON b.UserID = u.UserID
     WHERE b.BookingID = SCOPE_IDENTITY();
 END;
+GO
+
+---------------------------------------------------------------------
+CREATE PROCEDURE dbo.usp_DeleteBooking
+    @BookingID INT,
+    @UserID INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -----------------------------------------------------
+    -- 1. GET BOOKINGDATA
+    -----------------------------------------------------
+    DECLARE @BookingDate DATE;
+    DECLARE @BookingOwner INT;
+
+    SELECT 
+        @BookingDate = [Date],
+        @BookingOwner = UserID
+    FROM dbo.Booking
+    WHERE BookingID = @BookingID;
+
+    IF @BookingDate IS NULL
+    BEGIN
+        RAISERROR('Bookingen findes ikke.', 16, 1);
+        RETURN;
+    END
+
+    -----------------------------------------------------
+    -- 2. FIND USER ROLE
+    -----------------------------------------------------
+    DECLARE @UserTypeID INT;
+
+    SELECT @UserTypeID = UserTypeID
+    FROM dbo.[User]
+    WHERE UserID = @UserID;
+
+    IF @UserTypeID IS NULL
+    BEGIN
+        RAISERROR('Bruger findes ikke.', 16, 1);
+        RETURN;
+    END
+
+    -----------------------------------------------------
+    -- 3. STUDENT (UserTypeID = 1)
+    -----------------------------------------------------
+    IF @UserTypeID = 1
+    BEGIN
+        -- Studerende må kun slette egne bookings
+        IF @BookingOwner <> @UserID
+        BEGIN
+            RAISERROR('Studerende må kun slette deres egne bookinger.', 16, 1);
+            RETURN;
+        END
+
+        DELETE FROM dbo.Booking WHERE BookingID = @BookingID;
+        RETURN;
+    END
+
+    -----------------------------------------------------
+    -- 4. TEACHER (UserTypeID = 2)
+    -----------------------------------------------------
+    IF @UserTypeID = 2
+    BEGIN
+        -- TEACHER CAN DELETE EVERYONES BOOKINGS BUT NEEDS TO FOLLOW 3-DAY RULE
+        IF DATEDIFF(DAY, CONVERT(date, GETDATE()), @BookingDate) < 3
+        BEGIN
+            RAISERROR('Undervisere kan kun slette bookinger hvis der er mindst 3 dage til.', 16, 1);
+            RETURN;
+        END
+
+        DELETE FROM dbo.Booking WHERE BookingID = @BookingID;
+        RETURN;
+    END
+
+    -----------------------------------------------------
+    -- 5. OTHER ROLES (Admin)
+    -----------------------------------------------------
+    RAISERROR('Denne bruger har ikke lov til at slette bookinger.', 16, 1);
+END;
+GO
 GO
 
 
