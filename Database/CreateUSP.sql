@@ -1,8 +1,8 @@
 USE ZealandBooking;
 GO
 
+-- UserStoredProcedures drops for when and if they are altered
 
--- UserStoredProcedures
 
 IF OBJECT_ID('dbo.usp_GetFilteredBookings', 'P') IS NOT NULL
     DROP PROCEDURE dbo.usp_GetFilteredBookings;
@@ -20,6 +20,16 @@ IF OBJECT_ID('dbo.usp_GetBookingsByUserID', 'P') IS NOT NULL
     DROP PROCEDURE dbo.usp_GetBookingsByUserID;
 GO
 
+IF OBJECT_ID('dbo.usp_CreateBooking', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.usp_CreateBooking;
+GO
+
+IF OBJECT_ID('dbo.usp_LoginUser', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.usp_LoginUser;
+GO
+
+
+-- UserStoredProcedures Creates
 
 CREATE PROCEDURE dbo.usp_GetFilteredBookings
     @UserID        INT,                              
@@ -265,9 +275,6 @@ GO
 
 
 
-IF OBJECT_ID('dbo.usp_CreateBooking', 'P') IS NOT NULL
-    DROP PROCEDURE dbo.usp_CreateBooking;
-GO
 
 CREATE PROCEDURE dbo.usp_CreateBooking
     @UserID       INT,
@@ -390,9 +397,7 @@ BEGIN
 END;
 GO
 
-IF OBJECT_ID('dbo.usp_LoginUser', 'P') IS NOT NULL
-    DROP PROCEDURE dbo.usp_LoginUser;
-GO
+
 
 CREATE PROCEDURE dbo.usp_LoginUser
     @Email      NVARCHAR(255),
