@@ -15,7 +15,7 @@ namespace Zealand_Lokale_Booking_Library.Repos
     /// This repository uses Dapper to execute the stored procedure 
     /// <c>usp_GetBookingsByUserID</c> and maps the result to <see cref="Booking"/> objects.
     /// </summary>
-    public class GetBookingsRepo: ICreateBookingRepo
+    public class GetBookingsRepo: IGetBookingsRepo
     {
         private readonly string _connectionString;
         /// <summary>
