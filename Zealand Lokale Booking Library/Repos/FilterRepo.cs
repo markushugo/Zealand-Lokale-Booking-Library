@@ -14,7 +14,7 @@ namespace Zealand_Lokale_Booking_Library.Repos
     /// including fetching filter options for a specific user and retrieving
     /// free room booking times based on user-defined criteria.
     /// </summary>
-    public class FilterRepo
+    public class FilterRepo: IFilterRepo
     {
         private readonly string _connectionString;
         /// <summary>
