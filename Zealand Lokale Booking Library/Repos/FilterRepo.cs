@@ -14,7 +14,7 @@ namespace Zealand_Lokale_Booking_Library.Repos
     /// including fetching filter options for a specific user and retrieving
     /// free room booking times based on user-defined criteria.
     /// </summary>
-    public class FilterRepository
+    public class FilterRepo: IFilterRepo
     {
         private readonly string _connectionString;
         /// <summary>
@@ -24,7 +24,7 @@ namespace Zealand_Lokale_Booking_Library.Repos
         /// <param name="connectionString">
         /// The connection string used to connect to the SQL Server database.
         /// </param>
-        public FilterRepository(string connectionString)
+        public FilterRepo(string connectionString)
         {
             _connectionString = connectionString;
         }

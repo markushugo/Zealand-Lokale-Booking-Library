@@ -9,7 +9,7 @@ using Zealand_Lokale_Booking_Library.Models;
 
 namespace Zealand_Lokale_Booking_Library.Repos
 {
-    public class ManageBookingRepo
+    public class ManageBookingRepo: IManageBookingRepo
     {
         private readonly string _connectionString;
         /// <summary>
