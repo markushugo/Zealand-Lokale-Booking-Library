@@ -9,6 +9,6 @@ namespace Zealand_Lokale_Booking_Library.Services
 {
     public interface IUserService
     {
-        Task<User?> AuthenticateAsync(string email, string password);
+        User? ValidateLogin(string email, string password);
     }
 }

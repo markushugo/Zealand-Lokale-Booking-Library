@@ -1,40 +1,22 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Zealand_Lokale_Booking_Library.Models;
 using Zealand_Lokale_Booking_Library.Repos;
 
 namespace Zealand_Lokale_Booking_Library.Services
 {
-    public class UserService
+    public class UserService : IUserService
     {
-        private readonly IUserRepo _userRepo;
+        private readonly IUserRepo _repo;
 
-        public UserService(IUserRepo userRepo)
+        public UserService(IUserRepo repo)
         {
-            _userRepo = userRepo;
+            _repo = repo;
         }
 
-        /// <summary>
-        /// Attempts to authenticate the user and returns a SessionID GUID on success.
-        /// </summary>
-        public async Task<(bool Success, Guid? SessionId, string Message)> LoginAsync(string email, string password)
+        public User? ValidateLogin(string email, string password)
         {
-            if (string.IsNullOrWhiteSpace(email))
-                return (false, null, "Email is required.");
-
-            if (string.IsNullOrWhiteSpace(password))
-                return (false, null, "Password is required.");
-
-            var user = await _userRepo.AuthenticateUserAsync(email, password);
-
-            if (user == null)
-            {
-                return (false, null, "Invalid email or password.");
-            }
-
-            // Generate a new SessionId for the authenticated user
-            var sessionId = Guid.NewGuid();
-
-            return (true, sessionId, "Login successful.");
+            return _repo.GetUserByCredentials(email, password);
         }
     }
 }
