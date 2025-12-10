@@ -6,6 +6,7 @@ namespace Zealand_Lokale_Booking_Library.Repos
 {
     public interface IBookingRepo
     {
-        Task<IReadOnlyList<Booking>> GetFilteredBookingsAsync(BookingFilter filter);
+
+        
     }
 }
