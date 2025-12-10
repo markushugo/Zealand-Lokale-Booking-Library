@@ -6,7 +6,7 @@ using Zealand_Lokale_Booking_Library.Repos;
 
 namespace Zealand_Lokale_Booking_Library.Repos
 {
-    public class CreateBookingRepo //ICreateBookingRepo
+    public class CreateBookingRepo: ICreateBookingRepo
     {
         private readonly string _connectionString;
 
@@ -21,7 +21,6 @@ namespace Zealand_Lokale_Booking_Library.Repos
         /// - Department validation
         /// - Double-booking validation
         /// - Room ownership validation
-        /// - Returns the new BookingID
         /// </summary>
         public async Task CreateBookingAsync(int userId, int roomId, DateTime date, TimeSpan startTime, int? smartBoardId)
         {
