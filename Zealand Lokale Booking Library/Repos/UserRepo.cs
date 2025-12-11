@@ -22,9 +22,9 @@ namespace Zealand_Lokale_Booking_Library.Repos
             conn.Open();
 
             string sql = @"
-                SELECT UserID, Name, Email, Password, Phone, UserTypeID, LoggedInSessionID
-                FROM Users
-                WHERE Email = @Email AND Password = @Password";
+        SELECT UserID, Name, Email, Password, Phone, UserTypeID
+        FROM [User]
+        WHERE Email = @Email AND Password = @Password";
 
             using SqlCommand cmd = new SqlCommand(sql, conn);
             cmd.Parameters.AddWithValue("@Email", email);
@@ -41,9 +41,10 @@ namespace Zealand_Lokale_Booking_Library.Repos
                 Email = reader.GetString(2),
                 Password = reader.GetString(3),
                 Phone = reader.GetString(4),
-                UserTypeID = reader.GetInt32(5),
-                LoggedInSessionID = reader.GetInt32(6)
+                UserTypeID = reader.GetInt32(5)
             };
         }
+
+
     }
 }

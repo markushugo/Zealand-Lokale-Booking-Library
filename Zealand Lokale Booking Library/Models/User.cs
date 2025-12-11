@@ -14,6 +14,6 @@ namespace Zealand_Lokale_Booking_Library.Models
         public string Password { get; set; }
         public string Phone { get; set; }
         public int UserTypeID { get; set; }
-        public int LoggedInSessionID { get; set; }
+        //public int LoggedInSessionID { get; set; }
     }
 }
