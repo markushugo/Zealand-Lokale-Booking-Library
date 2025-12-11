@@ -23,7 +23,7 @@ namespace Zealand_Lokale_Booking_Library.Repos
 
             string sql = @"
         SELECT UserID, Name, Email, Password, Phone, UserTypeID
-        FROM [User]
+        FROM dbo.[User]
         WHERE Email = @Email AND Password = @Password";
 
             using SqlCommand cmd = new SqlCommand(sql, conn);
@@ -31,7 +31,6 @@ namespace Zealand_Lokale_Booking_Library.Repos
             cmd.Parameters.AddWithValue("@Password", password);
 
             using SqlDataReader reader = cmd.ExecuteReader();
-
             if (!reader.Read()) return null;
 
             return new User
@@ -40,7 +39,7 @@ namespace Zealand_Lokale_Booking_Library.Repos
                 Name = reader.GetString(1),
                 Email = reader.GetString(2),
                 Password = reader.GetString(3),
-                Phone = reader.GetString(4),
+                Phone = reader.IsDBNull(4) ? null : reader.GetString(4), // <- FIX HER!
                 UserTypeID = reader.GetInt32(5)
             };
         }
