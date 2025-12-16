@@ -566,7 +566,7 @@ BEGIN
         -- return guid
         DECLARE @SessionID uniqueidentifier = NEWID();
         SELECT CONVERT(CHAR(255), @SessionID) AS 'char';
-        UPDATE [User] set LoggedinSessioonID=@SessionID WHERE Email=@Email
+        UPDATE [User] set LoggedinSessionID=@SessionID WHERE Email=@Email
         SELECT
             1 AS IsAuthenticated,
             @SessionID AS SessionID;

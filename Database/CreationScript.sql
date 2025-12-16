@@ -94,7 +94,7 @@ CREATE TABLE dbo.[User] (
     Email      VARCHAR(100)      NOT NULL,
     Password   VARCHAR(255)      NOT NULL,
     UserTypeID INT               NOT NULL,
-    LoggedinSessioonID uniqueidentifier NULL,
+    LoggedInSessionID uniqueidentifier NULL,
     CONSTRAINT PK_User PRIMARY KEY CLUSTERED (UserID),
     CONSTRAINT UQ_User_Email UNIQUE (Email),
     CONSTRAINT FK_User_UserType
