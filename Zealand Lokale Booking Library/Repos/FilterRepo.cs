@@ -12,7 +12,7 @@ namespace Zealand_Lokale_Booking_Library.Repos
     /// <summary>
     /// Provides access to filter-related data and available booking slots,
     /// including fetching filter options for a specific user and retrieving
-    /// free room booking times based on user-defined criteria.
+    /// free room booking times based on user-defined criteria..
     /// </summary>
     public class FilterRepo: IFilterRepo
     {
